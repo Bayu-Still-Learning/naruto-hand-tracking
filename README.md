@@ -1,14 +1,20 @@
-# NARUTO
+# NARUTO HAND TRACKING
 
-Simple hand tracking with Naruto/Sasuke powers.
+Aplikasi hand tracking dengan efek Naruto dan Sasuke 🌀🔥
 
-### How to use:
-- Open `index.html` in your browser.
+## 🚀 Tech Stack
 
-### Controls:
-- **Right Hand Open:** Shows Naruto power.
-- **Left Hand Open:** Shows Sasuke power.
-- **Blue Lines:** Shows the hand tracking so you know it's working
+![HTML](https://img.shields.io/badge/HTML-5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS](https://img.shields.io/badge/CSS-3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 
-### Note:
-- Had to remove the glow to make it compatible for all devices.
+## 📌 How to Use
+- Open `index.html` in your browser
+
+## 🎮 Controls
+- **Right Hand Open** → Shows Naruto power
+- **Left Hand Open** → Shows Sasuke power
+- **Blue Lines** → Hand tracking indicator
+
+## ⚠️ Note
+- Glow effect removed for better compatibility on all devices
