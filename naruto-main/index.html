@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naruto Hand Effect</title>
+
+  <!-- MEDIAPIPE -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js" crossorigin="anonymous"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+
+    #v_src, #out {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #out {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .darkness {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(10, 5, 0, 0.3);
+      mix-blend-mode: multiply;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .fx {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: none;
+      mix-blend-mode: screen;
+      z-index: 20;
+    }
+
+    #n { width: 800px; }
+    #s { width: 1000px; }
+  </style>
+</head>
+
+<body>
+
+  <video id="v_src" autoplay playsinline></video>
+  <canvas id="out"></canvas>
+  <div class="darkness"></div>
+
+  <!-- 🔥 GANTI INI DENGAN FILE VIDEO KAMU -->
+  <video id="n" class="fx" src="assets/naruto.mp4" muted loop playsinline></video>
+  <video id="s" class="fx" src="assets/sasuke.mp4" muted loop playsinline></video>
+
+  <script>
+    const video = document.getElementById('v_src');
+    const canvas = document.getElementById('out');
+    const ctx = canvas.getContext('2d');
+
+    const naruto = document.getElementById('n');
+    const sasuke = document.getElementById('s');
+
+    let power = [0, 0];
+    let wasOpen = [false, false];
+
+    function isHandOpen(pts) {
+      let count = 0;
+      const wrist = pts[0];
+      const tips = [8, 12, 16, 20];
+      const pips = [6, 10, 14, 18];
+
+      for (let i = 0; i < tips.length; i++) {
+        const tip = pts[tips[i]];
+        const pip = pts[pips[i]];
+        if (Math.hypot(tip.x - wrist.x, tip.y - wrist.y) >
+            Math.hypot(pip.x - wrist.x, pip.y - wrist.y)) count++;
+      }
+      return count >= 3;
+    }
+
+    function onResults(results) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      naruto.style.display = 'none';
+      sasuke.style.display = 'none';
+
+      if (results.multiHandLandmarks && results.multiHandedness) {
+
+        results.multiHandLandmarks.forEach((pts, i) => {
+
+          const isRight = results.multiHandedness[i].label === 'Right';
+          const idx = isRight ? 1 : 0;
+
+          // DRAW HAND
+          drawConnectors(ctx, pts, HAND_CONNECTIONS, {
+            color: '#00d4ff',
+            lineWidth: 3
+          });
+
+          drawLandmarks(ctx, pts, {
+            color: '#ffffff',
+            radius: 2
+          });
+
+          const open = isHandOpen(pts);
+
+          power[idx] += open ? 0.05 : -0.1;
+          power[idx] = Math.max(0, Math.min(1, power[idx]));
+
+          if (open && !wasOpen[idx]) {
+            const vid = isRight ? sasuke : naruto;
+            vid.currentTime = 0;
+            vid.play();
+          }
+
+          wasOpen[idx] = open;
+
+          const wrist = pts[0];
+
+          if (power[idx] > 0.05) {
+
+            const x = (1 - wrist.x) * window.innerWidth;
+            const y = wrist.y * window.innerHeight;
+
+            if (isRight) {
+              sasuke.style.left = `${x}px`;
+              sasuke.style.top = `${y}px`;
+              sasuke.style.display = 'block';
+              sasuke.style.opacity = power[idx];
+            } else {
+              naruto.style.left = `${x}px`;
+              naruto.style.top = `${y}px`;
+              naruto.style.display = 'block';
+              naruto.style.opacity = power[idx];
+            }
+          }
+        });
+      }
+    }
+
+    // 🔥 INI YANG PALING PENTING (FIX ERROR WASM)
+    const hands = new Hands({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+      }
+    });
+
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    hands.onResults(onResults);
+
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        await hands.send({ image: video });
+      },
+      width: 1280,
+      height: 720
+    });
+
+    camera.start();
+  </script>
+
+</body>
+</html>
